@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCPS Benchmark Tracker 2.0 Plus</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4F3EF;
+    --surface: #FFFFFF;
+    --border: #E0DED5;
+    --text: #111110;
+    --muted: #6B6A65;
+    --accent: #2563EB;
+    --green: #14532D;
+    --green-bg: #BBFACC;
+    --blue: #1E3A8A;
+    --blue-bg: #BFDBFE;
+    --red-bg: #FECACA;
+    --red: #7F1D1D;
+    --amber-bg: #FDE68A;
+    --amber: #78350F;
+    --yellow-bg: #FEF08A;
+    --yellow: #713F12;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .logo span {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background: var(--text);
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 28px;
+    margin-right: 8px;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  .upload-area {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    margin-bottom: 1.5rem;
+  }
+
+  .upload-area:hover { border-color: var(--accent); background: #EFF6FF; }
+  .upload-area.drag { border-color: var(--accent); background: #EFF6FF; }
+
+  .upload-icon {
+    width: 48px; height: 48px;
+    background: var(--bg);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 22px;
+  }
+
+  .upload-area h3 { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
+  .upload-area p { color: var(--muted); font-size: 13px; }
+
+  #fileInput { display: none; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: all .15s;
+    text-decoration: none;
+  }
+
+  .btn:hover { background: var(--bg); }
+
+  .btn-primary {
+    background: var(--text);
+    color: white;
+    border-color: var(--text);
+  }
+
+  .btn-primary:hover { opacity: .85; }
+
+  .app { display: none; }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .toolbar input, .toolbar select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    height: 34px;
+    outline: none;
+  }
+
+  .toolbar input { width: 200px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--accent); }
+
+  .student-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  .stab {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    transition: all .15s;
+  }
+
+  .stab:hover { border-color: var(--text); color: var(--text); }
+  .stab.active { background: var(--text); color: white; border-color: var(--text); }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: .875rem 1rem;
+  }
+
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .stat-val { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; font-family: 'DM Mono', monospace; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    font-size: 12px;
+    color: var(--muted);
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+  }
+
+  .legend strong { color: var(--text); margin-right: 4px; }
+
+  .tbl-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: auto;
+    max-height: 60vh;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+
+  thead th {
+    background: var(--bg);
+    padding: 9px 14px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+  td { padding: 8px 14px; vertical-align: middle; }
+
+  .sec-row td {
+    background: var(--bg);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    padding: 5px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .badge-pre { background: #FF4444; color: #fff; }
+  .badge-em  { background: #FF8C00; color: #fff; }
+  .badge-in  { background: #EAB308; color: #1a1a00; }
+  .badge-pr  { background: #16A34A; color: #fff; }
+  .badge-lvl { background: #15803D; color: #fff; }
+  .badge-prof { background: #2563EB; color: #fff; }
+
+  .empty { padding: 3rem; text-align: center; color: var(--muted); font-size: 13px; }
+
+  .grow-yes  { color: var(--green); font-weight: 500; }
+  .grow-prof { color: var(--blue); font-weight: 500; }
+  .grow-no   { color: var(--muted); }
+
+  .goal-met { color: var(--green); }
+  .goal-not { color: var(--red); }
+
+  .stab-regression { border-color: #EF4444; background: #FEE2E2; color: #7F1D1D; font-weight: 600; }
+  .stab-regression.active { background: #DC2626; color: white; border-color: #DC2626; }
+  .stab-no-growth { border-color: #F59E0B; background: #FEF3C7; color: #78350F; font-weight: 600; }
+  .stab-no-growth.active { background: #D97706; color: white; border-color: #D97706; }
+
+  .row-regression { background: #FECACA !important; }
+  .row-regression:hover { background: #FCA5A5 !important; }
+  .row-no-growth { background: #FEF08A !important; }
+  .row-no-growth:hover { background: #FDE047 !important; }
+
+  .badge-reg { background: #DC2626; color: #fff; }
+  .badge-no-growth { background: #D97706; color: #fff; }
+
+  .alert-banner {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-left: 4px solid;
+  }
+  .alert-regression { background: #FEE2E2; color: #7F1D1D; border-color: #DC2626; border-left-color: #DC2626; }
+  .alert-no-growth { background: #FEF3C7; color: #78350F; border-color: #D97706; border-left-color: #D97706; }
+
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+  .dot-regression { background: #DC2626; }
+  .dot-no-growth { background: #D97706; }
+  .dot-ok { background: #16A34A; }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media print {
+    header { position: relative; box-shadow: none; border-bottom: 2px solid #111; padding: .75rem 1.5rem; }
+    .header-right { display: none; }
+    .student-bar { display: none; }
+    .toolbar { display: none; }
+    .legend { break-inside: avoid; }
+    .tbl-wrap { border: 1px solid #ccc; overflow: visible; }
+    table { font-size: 11px; }
+    thead th { background: #f0f0f0 !important; color: #333 !important; position: relative; top: 0; }
+    tbody tr { break-inside: avoid; }
+    .row-regression { background: #FECACA !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .row-no-growth { background: #FEF08A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .badge-pre { background: #FF4444 !important; color: #fff !important; }
+    .badge-em  { background: #FF8C00 !important; color: #fff !important; }
+    .badge-in  { background: #EAB308 !important; color: #1a1a00 !important; }
+    .badge-pr  { background: #16A34A !important; color: #fff !important; }
+    .badge-lvl { background: #15803D !important; color: #fff !important; }
+    .badge-reg { background: #DC2626 !important; color: #fff !important; }
+    .badge-no-growth { background: #D97706 !important; color: #fff !important; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card { border: 1px solid #ccc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .alert-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .upload-area { display: none; }
+    footer { margin-top: 1rem; padding: 1rem; font-size: 11px; }
+    .print-title { display: block !important; font-size: 13px; font-weight: 600; color: #333; margin-bottom: .25rem; }
+    body { background: white !important; }
+    .main { padding: 1rem; }
+  }
+
+  .print-title { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>D</span>DCPS Benchmark Tracker 2.0 Plus</div>
+  <div class="header-right">
+    <button class="btn" onclick="document.getElementById('fileInput').click()">&#8593; Upload CSV</button>
+    <button class="btn btn-primary" id="dlBtn" style="display:none" onclick="downloadCSV()">&#8595; Export CSV</button>
+    <button class="btn" id="pdfBtn" style="display:none" onclick="exportPDF()">&#128438; Export PDF</button>
+    <button class="btn" id="allPdfBtn" style="display:none" onclick="exportAllPDF()">&#128438; Export All Students PDF</button>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()"
+    ondragover="event.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="event.preventDefault();this.classList.remove('drag');handleDrop(event)">
+    <div class="upload-icon">📊</div>
+    <h3>Upload Benchmark Performance CSV</h3>
+    <p>Needs: Student Name, Benchmark Assessment Title, Date Completed, Accuracy (Interpretation)</p>
+    <p style="margin-top:8px;font-size:12px;color:#9CA3AF">BOY: Aug–Oct &nbsp;·&nbsp; MOY: Nov–May 8 &nbsp;·&nbsp; EOY: May 11+ and June</p>
+  </div>
+
+  <input type="file" id="fileInput" accept=".csv" onchange="handleFile(event)">
+
+  <div class="app" id="app">
+
+    <div class="print-title" id="printTitle"></div>
+    <div id="alert"></div>
+    <div class="stats-grid" id="stats"></div>
+    <div class="student-bar" id="studentBar"></div>
+
+    <div class="legend">
+      <strong>Key:</strong>
+      <span><span class="badge badge-lvl">1–4 levels</span> &nbsp;growth</span>
+      <span><span class="badge badge-no-growth">No growth</span> &nbsp;highlighted yellow</span>
+      <span><span class="badge badge-reg">Regression</span> &nbsp;highlighted red</span>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="🔍 Search benchmark…" oninput="render()">
+      <select id="periodF" onchange="render()">
+        <option value="">All periods</option>
+        <option>BOY</option><option>MOY</option><option>EOY</option>
+      </select>
+      <select id="scoreF" onchange="render()">
+        <option value="">All scores</option>
+        <option>Proficient</option><option>Instructional</option>
+        <option>Emerging</option><option>Pre-Emerging</option>
+      </select>
+      <select id="secF" onchange="render()">
+        <option value="">All sections</option>
+      </select>
+      <select id="growF" onchange="render()">
+        <option value="">All benchmarks</option>
+        <option value="grew">Grew only</option>
+        <option value="no">No growth</option>
+        <option value="regression">Regression only</option>
+      </select>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Benchmark</th><th>Section</th>
+          <th>BOY</th><th>MOY</th><th>EOY</th>
+          <th>Growth</th><th>Type</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>DCPS Benchmark Tracker 2.0 Plus &nbsp;·&nbsp; BOY / MOY / EOY</footer>
+
+<script>
+const LEVELS = {'Pre-Emerging':0,'Emerging':1,'Instructional':2,'Proficient':3};
+let parsed = {}, students = [], current = '';
+
+function getPeriod(d) {
+  const dt = new Date(d), m = dt.getMonth()+1, day = dt.getDate();
+  if (m>=8 && m<=10) return 'BOY';
+  if (m===11||m===12||m===1||m===2||m===3||m===4||(m===5&&day<=8)) return 'MOY';
+  if ((m===5&&day>=11)||m>=6) return 'EOY';
+  return null;
+}
+
+function growthType(boy, moy, eoy) {
+  const b=LEVELS[boy], m=LEVELS[moy], e=LEVELS[eoy];
+  // Find max growth across any two periods
+  let maxGrowth = 0;
+  if (b!=null&&e!=null&&e-b>maxGrowth) maxGrowth=e-b;
+  if (b!=null&&m!=null&&m-b>maxGrowth) maxGrowth=m-b;
+  if (m!=null&&e!=null&&e-m>maxGrowth) maxGrowth=e-m;
+  // Proficient at any point with no prior score = 1 level (advanced to next benchmark)
+  if (maxGrowth===0) {
+    if ((boy==='Proficient'&&m==null&&e==null)||(moy==='Proficient'&&b==null&&e==null)||(eoy==='Proficient'&&b==null&&m==null)) maxGrowth=1;
+  }
+  return maxGrowth>0 ? maxGrowth : null;
+}
+
+function regressionType(boy, moy, eoy) {
+  const b=LEVELS[boy], m=LEVELS[moy], e=LEVELS[eoy];
+  let maxReg = 0;
+  if (b!=null&&e!=null&&b-e>maxReg) maxReg=b-e;
+  if (b!=null&&m!=null&&b-m>maxReg) maxReg=b-m;
+  if (m!=null&&e!=null&&m-e>maxReg) maxReg=m-e;
+  return maxReg>0 ? -maxReg : null;
+}
+
+function studentStatus(data) {
+  const benches = Object.keys(data);
+  if (!benches.length) return 'no-data';
+  const hasGrowth = benches.some(b => growthType(data[b].BOY, data[b].MOY, data[b].EOY));
+  const hasRegression = benches.some(b => regressionType(data[b].BOY, data[b].MOY, data[b].EOY));
+  if (!hasGrowth && hasRegression) return 'regression';
+  if (!hasGrowth && !hasRegression) return 'no-growth';
+  return 'ok';
+}
+
+function badgeHtml(score) {
+  if (!score) return '<span style="color:var(--muted)">—</span>';
+  const c = score==='Pre-Emerging'?'pre':score==='Emerging'?'em':score==='Instructional'?'in':'pr';
+  return `<span class="badge badge-${c}">${score}</span>`;
+}
+
+function guessSec(b) {
+  const l = b.toLowerCase();
+  if (/addition|subtraction|multiplication|division|fraction|place value|money|time|measurement|geometry|algebra|decimal|number|counting|emerging spatial|emerging fraction|emerging number|emerging money|emerging time|emerging measure|math|ratio/.test(l)) return 'Math';
+  if (/writing|spelling|wirtting/.test(l)) return 'Writing';
+  if (/science/.test(l)) return 'Science';
+  if (/social/.test(l)) return 'Social Studies';
+  return 'ELA';
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  return lines.slice(1).map(line => {
+    const vals = []; let inQ=false, cur='';
+    for (let i=0;i<line.length;i++) {
+      if (line[i]==='"') { inQ=!inQ; }
+      else if (line[i]===','&&!inQ) { vals.push(cur.trim()); cur=''; }
+      else cur+=line[i];
+    }
+    vals.push(cur.trim());
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(vals[i]||'').replace(/"/g,'').trim());
+    return obj;
+  });
+}
+
+function processData(rows) {
+  const by = {};
+  rows.forEach(r => {
+    const name=(r['Student Name']||'').trim();
+    const bench=(r['Benchmark Assessment Title']||'').trim();
+    const date=r['Date Completed']||'';
+    const score=(r['Accuracy (Interpretation)']||'').trim();
+    const period=getPeriod(date);
+    if (!name||!bench||!period||!score) return;
+    if (!by[name]) by[name]={};
+    if (!by[name][bench]) by[name][bench]={BOY:null,MOY:null,EOY:null};
+    const prev=by[name][bench][period+'_d'];
+    if (!prev||new Date(date)>new Date(prev)) {
+      by[name][bench][period]=score;
+      by[name][bench][period+'_d']=date;
+    }
+  });
+  parsed=by; students=Object.keys(by).sort(); current=students[0]||'';
+
+  const secs=new Set();
+  rows.forEach(r=>{if(r['Benchmark Assessment Title'])secs.add(guessSec(r['Benchmark Assessment Title']));});
+  const sf=document.getElementById('secF');
+  sf.innerHTML='<option value="">All sections</option>';
+  [...secs].sort().forEach(s=>{const o=document.createElement('option');o.value=o.textContent=s;sf.appendChild(o);});
+
+  document.getElementById('uploadArea').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('dlBtn').style.display='';
+  document.getElementById('pdfBtn').style.display='';
+  document.getElementById('allPdfBtn').style.display='';
+  buildTabs(); renderStats(); render();
+}
+
+function handleFile(e) {
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>processData(parseCSV(ev.target.result));
+  r.readAsText(f);
+}
+
+function handleDrop(e) {
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>processData(parseCSV(ev.target.result));
+  r.readAsText(f);
+}
+
+function buildTabs() {
+  document.getElementById('studentBar').innerHTML = students.map(s =>
+    `<div class="stab${s===current?' active':''}" onclick="selectStudent('${s.replace(/'/g,"\\'")}')">${s}</div>`
+  ).join('');
+}
+
+function selectStudent(s) { current=s; buildTabs(); renderStats(); render(); }
+
+function exportPDF() {
+  document.getElementById('printTitle').textContent = current + ' — Benchmark Report';
+  window.print();
+}
+
+function exportAllPDF() {
+  const levelLabels = {1:'1 level',2:'2 levels',3:'3 levels',4:'4 levels'};
+
+  // Build inline print container instead of opening a new window (avoids popup blocker)
+  let existing = document.getElementById('allPrintContainer');
+  if (existing) existing.remove();
+
+  const container = document.createElement('div');
+  container.id = 'allPrintContainer';
+  container.style.cssText = 'display:none';
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @media print {
+      body > *:not(#allPrintContainer) { display: none !important; }
+      #allPrintContainer { display: block !important; }
+      .all-page { page-break-after: always; padding: 1.5rem; font-family: Arial, sans-serif; font-size: 11px; color: #111; }
+      .all-page:last-child { page-break-after: avoid; }
+      .all-h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+      .all-sub { font-size: 10px; color: #666; margin-bottom: 10px; }
+      .all-stats { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+      .all-stat { border: 1px solid #ddd; border-radius: 6px; padding: 5px 10px; }
+      .all-stat-lbl { font-size: 8px; text-transform: uppercase; color: #888; }
+      .all-stat-val { font-size: 16px; font-weight: 700; }
+      .all-alert-reg { background: #FEE2E2 !important; color: #7F1D1D; border-left: 4px solid #DC2626; padding: 6px 10px; border-radius: 4px; font-weight: 600; font-size: 10px; margin-bottom: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .all-alert-ng  { background: #FEF3C7 !important; color: #78350F; border-left: 4px solid #D97706; padding: 6px 10px; border-radius: 4px; font-weight: 600; font-size: 10px; margin-bottom: 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table.all-tbl { width: 100%; border-collapse: collapse; font-size: 10px; }
+      table.all-tbl thead th { background: #f0f0f0 !important; padding: 5px 7px; text-align: left; font-weight: 600; border-bottom: 1px solid #ccc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table.all-tbl tbody tr { border-bottom: 1px solid #e5e5e5; }
+      table.all-tbl td { padding: 4px 7px; vertical-align: middle; }
+      .all-sec td { background: #e8e8e8 !important; font-size: 9px; font-weight: 700; text-transform: uppercase; color: #555; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .all-row-reg td { background: #FECACA !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .all-row-ng  td { background: #FEF08A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .ab { display: inline-block; font-size: 9px; font-weight: 600; padding: 1px 6px; border-radius: 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .ab-pre { background: #FF4444 !important; color: #fff !important; }
+      .ab-em  { background: #FF8C00 !important; color: #fff !important; }
+      .ab-in  { background: #EAB308 !important; color: #1a1a00 !important; }
+      .ab-pr  { background: #16A34A !important; color: #fff !important; }
+      .ab-lvl { background: #15803D !important; color: #fff !important; }
+      .ab-reg { background: #DC2626 !important; color: #fff !important; }
+      .ab-ng  { background: #D97706 !important; color: #fff !important; }
+      .grow-yes { color: #14532D; font-weight: 600; }
+      .grow-reg { color: #7F1D1D; font-weight: 600; }
+      .grow-no  { color: #888; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  const bHtml = s => {
+    if (!s) return '<span style="color:#aaa">—</span>';
+    const c = s==='Pre-Emerging'?'pre':s==='Emerging'?'em':s==='Instructional'?'in':'pr';
+    return `<span class="ab ab-${c}">${s}</span>`;
+  };
+
+  students.forEach(student => {
+    const data = parsed[student] || {};
+    const benches = Object.keys(data);
+    let lvlCount = 0;
+    benches.forEach(b => { if (growthType(data[b].BOY, data[b].MOY, data[b].EOY)) lvlCount++; });
+    const met = lvlCount >= 3;
+    const status = studentStatus(data);
+
+    let alertHtml = '';
+    if (status === 'regression') alertHtml = `<div class="all-alert-reg">⚠ This student has regression on one or more benchmarks.</div>`;
+    else if (status === 'no-growth') alertHtml = `<div class="all-alert-ng">⚠ This student has not shown growth on any benchmark yet.</div>`;
+
+    const bySec = {};
+    benches.forEach(b => { const s = guessSec(b); if (!bySec[s]) bySec[s] = []; bySec[s].push(b); });
+
+    let rows = '';
+    Object.keys(bySec).sort().forEach(sec => {
+      rows += `<tr class="all-sec"><td colspan="6">${sec}</td></tr>`;
+      bySec[sec].sort().forEach(b => {
+        const row = data[b];
+        const gt = growthType(row.BOY, row.MOY, row.EOY);
+        const rt = regressionType(row.BOY, row.MOY, row.EOY);
+        const rowCls = rt ? 'all-row-reg' : !gt ? 'all-row-ng' : '';
+        const lbl = gt ? `✓ ${levelLabels[gt]||gt+' levels'} growth` : rt ? `▼ ${Math.abs(rt)} level${Math.abs(rt)>1?'s':''} regression` : '— No growth';
+        const lblCls = gt ? 'grow-yes' : rt ? 'grow-reg' : 'grow-no';
+        rows += `<tr class="${rowCls}">
+          <td style="font-weight:${gt||rt?600:400}">${b}</td>
+          <td style="color:#888;font-size:9px">${guessSec(b)}</td>
+          <td>${bHtml(row.BOY)}</td><td>${bHtml(row.MOY)}</td><td>${bHtml(row.EOY)}</td>
+          <td class="${lblCls}">${lbl}</td>
+        </tr>`;
+      });
+    });
+
+    const page = document.createElement('div');
+    page.className = 'all-page';
+    page.innerHTML = `
+      <div class="all-h2">${student} — Benchmark Report</div>
+      <div class="all-sub">DCPS Benchmark Tracker 2.0 Plus &nbsp;·&nbsp; SY 2025-2026 &nbsp;·&nbsp; </div>
+      ${alertHtml}
+      <div class="all-stats">
+        <div class="all-stat"><div class="all-stat-lbl">Benchmarks</div><div class="all-stat-val">${benches.length}</div></div>
+        <div class="all-stat"><div class="all-stat-lbl">Grown</div><div class="all-stat-val" style="color:#15803D">${lvlCount}</div></div>
+
+      </div>
+      <table class="all-tbl">
+        <thead><tr><th>Benchmark</th><th>Section</th><th>BOY</th><th>MOY</th><th>EOY</th><th>Growth</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    container.appendChild(page);
+  });
+
+  document.body.appendChild(container);
+  container.style.display = 'block';
+  window.print();
+  setTimeout(() => { container.style.display = 'none'; }, 1000);
+}
+
+function renderStats() {
+  const data=parsed[current]||{};
+  const benches=Object.keys(data);
+  let lvl=0, prof=0;
+  benches.forEach(b=>{
+    const t=growthType(data[b].BOY,data[b].MOY,data[b].EOY);
+    if(t) lvl++;
+  });
+  const met=lvl>=3;
+  const status = studentStatus(data);
+  let alertHtml = '';
+  if (status==='regression') alertHtml = `<div class="alert-banner alert-regression"><span class="status-dot dot-regression"></span> This student has regression on one or more benchmarks — scored lower in a later period.</div>`;
+  else if (status==='no-growth') alertHtml = `<div class="alert-banner alert-no-growth"><span class="status-dot dot-no-growth"></span> This student has not shown growth on any benchmark yet.</div>`;
+
+  document.getElementById('alert').innerHTML = alertHtml;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Benchmarks</div><div class="stat-val">${benches.length}</div></div>
+    <div class="stat-card" style="background:${lvl>0?'#DCFCE7':'var(--surface)'}"><div class="stat-label">Benchmarks grown</div><div class="stat-val" style="color:#15803D">${lvl}</div></div>
+  `;
+}
+
+function render() {
+  const data=parsed[current]||{};
+  const search=(document.getElementById('search').value||'').toLowerCase();
+  const pf=document.getElementById('periodF').value;
+  const sf=document.getElementById('scoreF').value;
+  const secf=document.getElementById('secF').value;
+  const gf=document.getElementById('growF').value;
+
+  const benches=Object.keys(data).filter(b=>{
+    if(search&&!b.toLowerCase().includes(search))return false;
+    if(secf&&guessSec(b)!==secf)return false;
+    const row=data[b];
+    if(sf){
+      if(pf){if(row[pf]!==sf)return false;}
+      else if(row.BOY!==sf&&row.MOY!==sf&&row.EOY!==sf)return false;
+    } else if(pf&&!row[pf])return false;
+    const gt=growthType(row.BOY,row.MOY,row.EOY);
+    const rt2=regressionType(row.BOY,row.MOY,row.EOY);
+    if(gf==='grew'&&!gt)return false;
+    if(gf==='no'&&(gt||rt2))return false;
+    if(gf==='regression'&&!rt2)return false;
+    return true;
+  });
+
+  const bySec={};
+  benches.forEach(b=>{const s=guessSec(b);if(!bySec[s])bySec[s]=[];bySec[s].push(b);});
+
+  const tbody=document.getElementById('tbody');
+  if(!benches.length){tbody.innerHTML=`<tr><td colspan="7" class="empty">No benchmarks match your filters.</td></tr>`;return;}
+
+  let html='';
+  Object.keys(bySec).sort().forEach(sec=>{
+    html+=`<tr class="sec-row"><td colspan="7">${sec}</td></tr>`;
+    bySec[sec].sort().forEach(b=>{
+      const row=data[b];
+      const gt=growthType(row.BOY,row.MOY,row.EOY);
+      const levelLabels={1:'1 level',2:'2 levels',3:'3 levels',4:'4 levels'};
+      const rt=regressionType(row.BOY,row.MOY,row.EOY);
+      const regLevels=rt?Math.abs(rt):0;
+      const rowCls=rt?'row-regression':!gt?'row-no-growth':'';
+      const cls=gt?'grow-yes':rt?'':'grow-no';
+      const lbl=gt?`✓ ${levelLabels[gt]||gt+' levels'} growth`:rt?`▼ ${regLevels} level${regLevels>1?'s':''} regression`:'— No growth';
+      const lblColor=gt?'var(--green)':rt?'var(--red)':'var(--muted)';
+      const typeBadge=gt?`<span class="badge badge-lvl">${levelLabels[gt]||gt+' levels'}</span>`:rt?`<span class="badge badge-reg">Regression</span>`:`<span class="badge badge-no-growth">No growth</span>`;
+      html+=`<tr class="${rowCls}">
+        <td style="font-weight:${gt||rt?500:400};max-width:280px">${b}</td>
+        <td style="color:var(--muted);font-size:12px">${guessSec(b)}</td>
+        <td>${badgeHtml(row.BOY)}</td>
+        <td>${badgeHtml(row.MOY)}</td>
+        <td>${badgeHtml(row.EOY)}</td>
+        <td style="color:${lblColor};font-weight:${gt||rt?500:400}">${lbl}</td>
+        <td>${typeBadge}</td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML=html;
+}
+
+function downloadCSV() {
+  const data=parsed[current]||{};
+  let csv='Student,Benchmark,Section,BOY,MOY,EOY,Growth,Growth Type\n';
+  Object.keys(data).sort().forEach(b=>{
+    const r=data[b];
+    const gt=growthType(r.BOY,r.MOY,r.EOY);
+    const g=gt?`Yes - ${gt} level${gt>1?'s':''} growth`:'No';
+    csv+=`"${current}","${b}","${guessSec(b)}","${r.BOY||''}","${r.MOY||''}","${r.EOY||''}","${g}"\n`;
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`${current.replace(/\s/g,'_')}_benchmark_tracker.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
