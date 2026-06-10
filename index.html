@@ -363,6 +363,7 @@
     <button class="btn" onclick="document.getElementById('fileInput').click()">&#8593; Upload CSV</button>
     <button class="btn btn-primary" id="dlBtn" style="display:none" onclick="downloadCSV()">&#8595; Export CSV</button>
     <button class="btn" id="pdfBtn" style="display:none" onclick="exportPDF()">&#128438; Export PDF</button>
+    <button class="btn" id="allPdfBtn" style="display:none" onclick="exportAllPDF()">&#128438; Export All Students PDF</button>
   </div>
 </header>
 
@@ -537,6 +538,7 @@ function processData(rows) {
   document.getElementById('app').style.display='block';
   document.getElementById('dlBtn').style.display='';
   document.getElementById('pdfBtn').style.display='';
+  document.getElementById('allPdfBtn').style.display='';
   buildTabs(); renderStats(); render();
 }
 
@@ -565,6 +567,122 @@ function selectStudent(s) { current=s; buildTabs(); renderStats(); render(); }
 function exportPDF() {
   document.getElementById('printTitle').textContent = current + ' — Benchmark Report';
   window.print();
+}
+
+function exportAllPDF() {
+  // Build a full print document with all students
+  let printDoc = `<!DOCTYPE html><html><head>
+  <title>DCPS Benchmark Tracker 2.0 Plus — All Students</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #111; background: white; }
+    .page { padding: 1.5rem; page-break-after: always; }
+    .page:last-child { page-break-after: avoid; }
+    h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #111; }
+    .subtitle { font-size: 11px; color: #666; margin-bottom: 12px; }
+    .stats { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .stat { border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; }
+    .stat-label { font-size: 9px; text-transform: uppercase; color: #888; letter-spacing:.05em; }
+    .stat-val { font-size: 18px; font-weight: 700; }
+    .alert-reg { background: #FEE2E2; color: #7F1D1D; border-left: 4px solid #DC2626; padding: 7px 12px; border-radius: 4px; font-weight: 600; font-size: 11px; margin-bottom: 10px; }
+    .alert-ng  { background: #FEF3C7; color: #78350F; border-left: 4px solid #D97706; padding: 7px 12px; border-radius: 4px; font-weight: 600; font-size: 11px; margin-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    thead th { background: #f0f0f0; padding: 6px 8px; text-align: left; font-weight: 600; font-size: 10px; border-bottom: 1px solid #ccc; }
+    tbody tr { border-bottom: 1px solid #e5e5e5; }
+    td { padding: 5px 8px; vertical-align: middle; }
+    .sec-row td { background: #e8e8e8; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing:.06em; color: #555; padding: 4px 8px; }
+    .badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 1px 7px; border-radius: 20px; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .b-pre { background: #FF4444; color: #fff; }
+    .b-em  { background: #FF8C00; color: #fff; }
+    .b-in  { background: #EAB308; color: #1a1a00; }
+    .b-pr  { background: #16A34A; color: #fff; }
+    .b-lvl { background: #15803D; color: #fff; }
+    .b-reg { background: #DC2626; color: #fff; }
+    .b-ng  { background: #D97706; color: #fff; }
+    .row-reg { background: #FECACA !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .row-ng  { background: #FEF08A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .grow-yes { color: #14532D; font-weight: 600; }
+    .grow-reg { color: #7F1D1D; font-weight: 600; }
+    .grow-no  { color: #888; }
+    footer-note { font-size: 9px; color: #aaa; margin-top: 8px; text-align: center; }
+    @media print {
+      .page { page-break-after: always; }
+      .page:last-child { page-break-after: avoid; }
+    }
+  </style></head><body>`;
+
+  const levelLabels = {1:'1 level',2:'2 levels',3:'3 levels',4:'4 levels'};
+
+  students.forEach((student, idx) => {
+    const data = parsed[student] || {};
+    const benches = Object.keys(data);
+    let lvlCount = 0;
+    benches.forEach(b => { if (growthType(data[b].BOY, data[b].MOY, data[b].EOY)) lvlCount++; });
+    const met = lvlCount >= 3;
+    const status = studentStatus(data);
+
+    // Alert banner
+    let alertHtml = '';
+    if (status === 'regression') alertHtml = `<div class="alert-reg">⚠ This student has regression on one or more benchmarks.</div>`;
+    else if (status === 'no-growth') alertHtml = `<div class="alert-ng">⚠ This student has not shown growth on any benchmark yet.</div>`;
+
+    // Stats
+    const statsHtml = `<div class="stats">
+      <div class="stat"><div class="stat-label">Benchmarks</div><div class="stat-val">${benches.length}</div></div>
+      <div class="stat"><div class="stat-label">Grown</div><div class="stat-val" style="color:#15803D">${lvlCount}</div></div>
+      <div class="stat"><div class="stat-label">TAS Goal (3+)</div><div class="stat-val" style="color:${met?'#15803D':'#DC2626'}">${met?'Met ✓':'Not yet'}</div></div>
+    </div>`;
+
+    // Group benchmarks by section
+    const bySec = {};
+    benches.forEach(b => { const s = guessSec(b); if (!bySec[s]) bySec[s] = []; bySec[s].push(b); });
+
+    let tableRows = '';
+    Object.keys(bySec).sort().forEach(sec => {
+      tableRows += `<tr class="sec-row"><td colspan="6">${sec}</td></tr>`;
+      bySec[sec].sort().forEach(b => {
+        const row = data[b];
+        const gt = growthType(row.BOY, row.MOY, row.EOY);
+        const rt = regressionType(row.BOY, row.MOY, row.EOY);
+        const rowCls = rt ? 'row-reg' : !gt ? 'row-ng' : '';
+        const lbl = gt ? `✓ ${levelLabels[gt]||gt+' levels'} growth` : rt ? `▼ ${Math.abs(rt)} level${Math.abs(rt)>1?'s':''} regression` : '— No growth';
+        const lblCls = gt ? 'grow-yes' : rt ? 'grow-reg' : 'grow-no';
+        const typeBadge = gt ? `<span class="badge b-lvl">${levelLabels[gt]||gt+' levels'}</span>` : rt ? `<span class="badge b-reg">Regression</span>` : `<span class="badge b-ng">No growth</span>`;
+
+        const bHtml = s => {
+          if (!s) return '<span style="color:#aaa">—</span>';
+          const c = s==='Pre-Emerging'?'pre':s==='Emerging'?'em':s==='Instructional'?'in':'pr';
+          return `<span class="badge b-${c}">${s}</span>`;
+        };
+
+        tableRows += `<tr class="${rowCls}">
+          <td style="font-weight:${gt||rt?600:400};max-width:220px">${b}</td>
+          <td style="color:#888;font-size:9px">${guessSec(b)}</td>
+          <td>${bHtml(row.BOY)}</td><td>${bHtml(row.MOY)}</td><td>${bHtml(row.EOY)}</td>
+          <td class="${lblCls}">${lbl}</td>
+        </tr>`;
+      });
+    });
+
+    printDoc += `<div class="page">
+      <h2>${student} — Benchmark Report</h2>
+      <div class="subtitle">DCPS Benchmark Tracker 2.0 Plus &nbsp;·&nbsp; School Year 2025-2026 &nbsp;·&nbsp; TAS Goal: 75% of students grow 1+ level on 3+ benchmarks</div>
+      ${alertHtml}
+      ${statsHtml}
+      <table>
+        <thead><tr><th>Benchmark</th><th>Section</th><th>BOY</th><th>MOY</th><th>EOY</th><th>Growth</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`;
+  });
+
+  printDoc += '</body></html>';
+
+  const win = window.open('', '_blank');
+  win.document.write(printDoc);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 800);
 }
 
 function renderStats() {
